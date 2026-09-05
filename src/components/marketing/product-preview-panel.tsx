@@ -10,7 +10,7 @@ import {
   PlayIcon,
   TileWaveformIcon,
 } from "@/components/icons";
-import type { Product } from "@/lib/products";
+import type { Product, WordTiming } from "@/lib/products";
 
 type Status = "idle" | "loading" | "playing";
 
@@ -70,13 +70,26 @@ function useAudioPreview(previewUrl?: string) {
 }
 
 /** Deskripsi yang nyorotin satu kata di posisi "sekarang" doang —
- * begitu lewat, balik abu lagi. Progress 0..1 berdasarkan
- * currentTime / duration audio preview yang lagi diputer. */
-function AnimatedDescription({ text, progress }: { text: string; progress: number }) {
+ * begitu lewat, balik abu lagi. Kalau `wordTimings` tersedia (hasil dari
+ * Lyric Timing Tool), highlight dihitung dari timestamp asli per kata.
+ * Kalau tidak ada, fallback ke estimasi proporsi karakter berbasis
+ * `progress` (currentTime / duration). */
+function AnimatedDescription({
+  text,
+  progress,
+  currentTime,
+  wordTimings,
+}: {
+  text: string;
+  progress: number;
+  currentTime: number;
+  wordTimings?: WordTiming[];
+}) {
   const tokens = useMemo(() => text.split(/(\s+)/), [text]);
 
   // rentang [start, end) 0..1 tiap kata, dihitung sekali per teks —
   // gak ada mutasi state pas render, cuma dibaca pas map di bawah.
+  // Cuma dipakai kalau wordTimings gak tersedia (fallback).
   const wordRanges = useMemo(() => {
     const totalChars = tokens.reduce(
       (sum, t) => (/^\s+$/.test(t) ? sum : sum + t.length),
@@ -94,6 +107,38 @@ function AnimatedDescription({ text, progress }: { text: string; progress: numbe
     });
   }, [tokens]);
 
+  // Map token index -> timestamp mulai (detik), diselaraskan berurutan
+  // dengan wordTimings (keduanya di-tokenize dengan cara yang sama).
+  const startByTokenIndex = useMemo(() => {
+    if (!wordTimings || wordTimings.length === 0) return null;
+    const map = new Map<number, number>();
+    let wtIndex = 0;
+    tokens.forEach((token, i) => {
+      if (token === "" || /^\s+$/.test(token)) return;
+      const timing = wordTimings[wtIndex];
+      if (timing && timing.start !== null) {
+        map.set(i, timing.start);
+      }
+      wtIndex += 1;
+    });
+    return map;
+  }, [tokens, wordTimings]);
+
+  // Token index yang lagi aktif berdasarkan currentTime: kata dengan
+  // start terbesar yang masih <= currentTime.
+  const activeTokenIndex = useMemo(() => {
+    if (!startByTokenIndex) return null;
+    let best = -1;
+    let bestStart = -Infinity;
+    startByTokenIndex.forEach((start, tokenIndex) => {
+      if (start <= currentTime && start > bestStart) {
+        bestStart = start;
+        best = tokenIndex;
+      }
+    });
+    return best;
+  }, [startByTokenIndex, currentTime]);
+
   return (
     <p className="whitespace-pre-line text-sm leading-loose text-muted">
       {tokens.map((token, i) => {
@@ -101,7 +146,9 @@ function AnimatedDescription({ text, progress }: { text: string; progress: numbe
         if (!range) {
           return <span key={i}>{token}</span>;
         }
-        const isActive = progress >= range.start && progress < range.end;
+        const isActive = startByTokenIndex
+          ? i === activeTokenIndex
+          : progress >= range.start && progress < range.end;
 
         return (
           <span key={i} className="relative inline-block px-0.5 py-0.5">
@@ -206,7 +253,12 @@ export function ProductPreviewPanel({ product }: { product: Product }) {
       </div>
 
       <div>
-        <AnimatedDescription text={product.description} progress={progress} />
+        <AnimatedDescription
+          text={product.description}
+          progress={progress}
+          currentTime={currentTime}
+          wordTimings={product.wordTimings}
+        />
       </div>
     </>
   );

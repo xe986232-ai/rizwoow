@@ -11,6 +11,11 @@ export interface Sample {
   url?: string;
 }
 
+export interface WordTiming {
+  text: string;
+  start: number | null;
+}
+
 export interface Product {
   slug: string;
   name: string;
@@ -23,6 +28,10 @@ export interface Product {
   formats: string[];
   featured?: boolean;
   description: string;
+  /** Optional per-word timing (seconds) for syncing the description
+   * highlight with previewUrl playback. When present, this is used
+   * instead of the character-proportion estimate. */
+  wordTimings?: WordTiming[];
   samples?: Sample[];
   /** Optional preview audio URL played from the product card's play button. */
   previewUrl?: string;
@@ -44,6 +53,75 @@ export const products: Product[] = [
     previewUrl: "/audio/bersaing-preview.mp3",
     description:
       "I love u\nI Miss u\nI need u\nI found u\nakan ku beri semua kepada mu\n\nmari sini\nku buka hati\ndan jangan lagi\nuntuk mencari cari\ntanpa basa basi\ntolong jangan gengsi\nberani\nuntuk menjadikan aku bidadari\n\naku pusing\nhingga tujuh keliling\nlirikan mu\nbuat aku jadi salting\nsampai buat ku terbaring\nrasaingin untuk calling\ntapi sayang aku tak bisa bersaing",
+    // Timing per kata (detik), hasil dari Lyric Timing Tool, disinkronkan
+    // dengan previewUrl di atas. Kata "I" pertama & "love" disesuaikan
+    // manual karena posisinya di awal lagu (0s) sempat tabrakan waktu.
+    wordTimings: [
+      { text: "I", start: 0 },
+      { text: "love", start: 0.1 },
+      { text: "u", start: 0.217 },
+      { text: "I", start: 0.467 },
+      { text: "Miss", start: 0.667 },
+      { text: "u", start: 0.983 },
+      { text: "I", start: 1.217 },
+      { text: "need", start: 1.517 },
+      { text: "u", start: 1.817 },
+      { text: "I", start: 2.267 },
+      { text: "found", start: 2.533 },
+      { text: "u", start: 2.817 },
+      { text: "akan", start: 4.133 },
+      { text: "ku", start: 4.35 },
+      { text: "beri", start: 4.65 },
+      { text: "semua", start: 5.2 },
+      { text: "kepada", start: 5.567 },
+      { text: "mu", start: 6.207 },
+      { text: "mari", start: 6.896 },
+      { text: "sini", start: 7.356 },
+      { text: "ku", start: 8.511 },
+      { text: "buka", start: 8.967 },
+      { text: "hati", start: 9.489 },
+      { text: "dan", start: 10.372 },
+      { text: "jangan", start: 10.594 },
+      { text: "lagi", start: 11.333 },
+      { text: "untuk", start: 12.422 },
+      { text: "mencari", start: 12.894 },
+      { text: "cari", start: 13.561 },
+      { text: "tanpa", start: 14.078 },
+      { text: "basa", start: 14.55 },
+      { text: "basi", start: 15.05 },
+      { text: "tolong", start: 15.939 },
+      { text: "jangan", start: 16.35 },
+      { text: "gengsi", start: 16.811 },
+      { text: "berani", start: 17.578 },
+      { text: "untuk", start: 19.239 },
+      { text: "menjadikan", start: 20.15 },
+      { text: "aku", start: 20.811 },
+      { text: "bidadari", start: 21.328 },
+      { text: "aku", start: 21.511 },
+      { text: "pusing", start: 21.944 },
+      { text: "hingga", start: 22.611 },
+      { text: "tujuh", start: 22.978 },
+      { text: "keliling", start: 23.644 },
+      { text: "lirikan", start: 24.756 },
+      { text: "mu", start: 25.656 },
+      { text: "buat", start: 26.084 },
+      { text: "aku", start: 26.456 },
+      { text: "jadi", start: 26.906 },
+      { text: "salting", start: 27.456 },
+      { text: "sampai", start: 27.933 },
+      { text: "buat", start: 28.267 },
+      { text: "ku", start: 28.867 },
+      { text: "terbaring", start: 29.2 },
+      { text: "rasaingin", start: 29.833 },
+      { text: "untuk", start: 30.55 },
+      { text: "calling", start: 31.183 },
+      { text: "tapi", start: 32.183 },
+      { text: "sayang", start: 32.683 },
+      { text: "aku", start: 33.15 },
+      { text: "tak", start: 33.45 },
+      { text: "bisa", start: 33.883 },
+      { text: "bersaing", start: 34.333 },
+    ],
     samples: [
       {
         id: "cb-01",
