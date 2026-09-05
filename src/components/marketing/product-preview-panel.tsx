@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   DownloadIcon,
   FlameIcon,
@@ -94,7 +95,7 @@ function AnimatedDescription({ text, progress }: { text: string; progress: numbe
   }, [tokens]);
 
   return (
-    <p className="whitespace-pre-line text-sm text-muted">
+    <p className="whitespace-pre-line text-sm leading-loose text-muted">
       {tokens.map((token, i) => {
         const range = wordRanges[i];
         if (!range) {
@@ -103,12 +104,20 @@ function AnimatedDescription({ text, progress }: { text: string; progress: numbe
         const isActive = progress >= range.start && progress < range.end;
 
         return (
-          <span
-            key={i}
-            className="transition-colors duration-150 ease-out"
-            style={{ color: isActive ? "var(--foreground)" : undefined }}
-          >
-            {token}
+          <span key={i} className="relative inline-block px-0.5 py-0.5">
+            {isActive && (
+              <motion.span
+                layoutId="active-word-highlight"
+                className="absolute inset-0 rounded-md bg-[#7c3aed]"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span
+              className="relative z-10 transition-colors duration-150 ease-out"
+              style={{ color: isActive ? "#ffffff" : undefined }}
+            >
+              {token}
+            </span>
           </span>
         );
       })}
