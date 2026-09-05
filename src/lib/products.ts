@@ -111,7 +111,7 @@ export const products: Product[] = [
         type: "one-shot",
         tags: ["Drums", "Clap"],
         duration: "0:01",
-        url: "/audio/concrete-bloom/clap-09.wav",
+        url: "/audio/concrete-bloom/clap-09.mp3",
       },
       {
         id: "cb-10",
@@ -119,7 +119,7 @@ export const products: Product[] = [
         type: "one-shot",
         tags: ["Drums", "Crash"],
         duration: "0:04",
-        url: "/audio/concrete-bloom/crash-10.wav",
+        url: "/audio/concrete-bloom/crash-10.mp3",
       },
       {
         id: "cb-11",
@@ -128,7 +128,7 @@ export const products: Product[] = [
         tags: ["Drums", "Full Drums"],
         bpm: 140,
         duration: "0:14",
-        url: "/audio/concrete-bloom/drum-loop-140bpm-11.wav",
+        url: "/audio/concrete-bloom/drum-loop-140bpm-11.mp3",
       },
       {
         id: "cb-12",
@@ -136,7 +136,7 @@ export const products: Product[] = [
         type: "loop",
         tags: ["Drums", "Hi-Hat"],
         duration: "0:04",
-        url: "/audio/concrete-bloom/hihat-loop-stereo-12.wav",
+        url: "/audio/concrete-bloom/hihat-loop-stereo-12.mp3",
       },
       {
         id: "cb-13",
@@ -144,7 +144,7 @@ export const products: Product[] = [
         type: "one-shot",
         tags: ["Drums", "Hi-Hat"],
         duration: "0:01",
-        url: "/audio/concrete-bloom/hihat-oneshot-13.wav",
+        url: "/audio/concrete-bloom/hihat-oneshot-13.mp3",
       },
       {
         id: "cb-14",
@@ -152,7 +152,7 @@ export const products: Product[] = [
         type: "loop",
         tags: ["Drums", "Hi-Hat"],
         duration: "0:02",
-        url: "/audio/concrete-bloom/hihat-loop-14.wav",
+        url: "/audio/concrete-bloom/hihat-loop-14.mp3",
       },
       {
         id: "cb-15",
@@ -160,7 +160,7 @@ export const products: Product[] = [
         type: "one-shot",
         tags: ["Drums", "Kick"],
         duration: "0:01",
-        url: "/audio/concrete-bloom/kick-15.wav",
+        url: "/audio/concrete-bloom/kick-15.mp3",
       },
       {
         id: "cb-16",
@@ -168,7 +168,7 @@ export const products: Product[] = [
         type: "loop",
         tags: ["Vocal", "Chop"],
         duration: "0:04",
-        url: "/audio/concrete-bloom/vocal-chop-16.wav",
+        url: "/audio/concrete-bloom/vocal-chop-16.mp3",
       },
       {
         id: "cb-17",
@@ -176,7 +176,7 @@ export const products: Product[] = [
         type: "one-shot",
         tags: ["Drums", "Ride"],
         duration: "0:01",
-        url: "/audio/concrete-bloom/ride-17.wav",
+        url: "/audio/concrete-bloom/ride-17.mp3",
       },
       {
         id: "cb-18",
@@ -185,7 +185,7 @@ export const products: Product[] = [
         tags: ["Drums", "Full Drums", "Trap"],
         bpm: 130,
         duration: "0:07",
-        url: "/audio/concrete-bloom/drum-loop-trap-130bpm-18.wav",
+        url: "/audio/concrete-bloom/drum-loop-trap-130bpm-18.mp3",
       },
       {
         id: "cb-19",
@@ -194,7 +194,7 @@ export const products: Product[] = [
         tags: ["Percussion"],
         bpm: 138,
         duration: "0:02",
-        url: "/audio/concrete-bloom/percussion-loop-138bpm-19.wav",
+        url: "/audio/concrete-bloom/percussion-loop-138bpm-19.mp3",
       },
     ],
   },
