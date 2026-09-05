@@ -177,6 +177,40 @@ export function SamplesSection({
     });
   }
 
+  // Loads a sample into the shared <audio> element and plays it, safely
+  // waiting for metadata before seeking (setting currentTime before the
+  // browser knows the media's duration can throw on some mobile browsers,
+  // silently killing the play() call right after it).
+  function loadAndPlay(audio: HTMLAudioElement, id: string, url: string, seekFraction: number) {
+    const isNewSource = audio.dataset.sampleId !== id || !audio.src.endsWith(url);
+    audio.dataset.sampleId = id;
+
+    const startPlayback = () => {
+      if (seekFraction > 0 && audio.duration) {
+        try {
+          audio.currentTime = seekFraction * audio.duration;
+        } catch {
+          // Ignore seek failures; playback can still proceed from 0.
+        }
+      }
+      void audio.play().catch(() => {
+        // Autoplay/decoding can fail silently; UI still reflects intent.
+      });
+    };
+
+    if (isNewSource) {
+      audio.src = url;
+      if (seekFraction > 0) {
+        audio.addEventListener("loadedmetadata", startPlayback, { once: true });
+        audio.load();
+      } else {
+        startPlayback();
+      }
+    } else {
+      startPlayback();
+    }
+  }
+
   function togglePlay(id: string) {
     const audio = audioRef.current;
     const sample = samples.find((item) => item.id === id);
@@ -191,14 +225,7 @@ export function SamplesSection({
       // Switch (or start) playback to the newly picked sample.
       if (audio) {
         if (sample?.url) {
-          audio.dataset.sampleId = id;
-          if (audio.src !== sample.url) {
-            audio.src = sample.url;
-            audio.currentTime = (seek[id] ?? 0) * (audio.duration || 0);
-          }
-          void audio.play().catch(() => {
-            // Autoplay/decoding can fail silently; UI still reflects intent.
-          });
+          loadAndPlay(audio, id, sample.url, seek[id] ?? 0);
         } else {
           // No audio source available for this sample yet — just toggle
           // the UI state so the play/pause icon still responds.
@@ -220,14 +247,7 @@ export function SamplesSection({
     const audio = audioRef.current;
     const sample = samples.find((item) => item.id === id);
     if (audio && sample?.url) {
-      if (audio.src !== sample.url) {
-        audio.dataset.sampleId = id;
-        audio.src = sample.url;
-      }
-      if (audio.duration) {
-        audio.currentTime = clamped * audio.duration;
-      }
-      void audio.play().catch(() => {});
+      loadAndPlay(audio, id, sample.url, clamped);
     }
 
     setPlayingId(id);
