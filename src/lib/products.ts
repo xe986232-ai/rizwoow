@@ -43,7 +43,7 @@ export const products: Product[] = [
     featured: true,
     previewUrl: "/audio/bersaing-preview.mp3",
     description:
-      "Bersaing by RizWoow is a collection of 128 samples built for hazy, lo-fi productions.\n\nDusty percussion loops sit alongside field-recorded foley, giving every hit a worn, tactile character. Layered tape hiss and subtle pitch drift keep the whole kit feeling analog and alive.\n\nThe pack features carefully prepared sounds from close-mic'd drums, cracked vinyl textures, and room-recorded ambience.\n\nAll sounds are royalty-free for commercial tracks, remixes, and DJ sets.\n\nFind that dusty, half-lit vibe with Bersaing from RizWoow.",
+      "I love u\nI Miss u\nI need u\nI found u\nakan ku beri semua kepada mu\n\nmari sini\nku buka hati\ndan jangan lagi\nuntuk mencari cari\ntanpa basa basi\ntolong jangan gengsi\nberani\nuntuk menjadikan aku bidadari\n\naku pusing\nhingga tujuh keliling\nlirikan mu\nbuat aku jadi salting\nsampai buat ku terbaring\nrasaingin untuk calling\ntapi sayang aku tak bisa bersaing",
     samples: [
       {
         id: "cb-01",
