@@ -1,13 +1,6 @@
 import { Breadcrumb } from "@/components/marketing/breadcrumb";
-import { ReadMore } from "@/components/marketing/read-more";
 import { SamplesSection } from "@/components/marketing/samples-section";
-import { PreviewPlayButton } from "@/components/marketing/preview-play-button";
-import {
-  DownloadIcon,
-  FlameIcon,
-  HeartIcon,
-  TileWaveformIcon,
-} from "@/components/icons";
+import { ProductPreviewPanel } from "@/components/marketing/product-preview-panel";
 import { getProductBySlug, products } from "@/lib/products";
 import { notFound } from "next/navigation";
 
@@ -77,45 +70,7 @@ export default async function ProductPage({
               </h2>
             </div>
 
-            <div className="flex min-h-[52px] items-center gap-2">
-              <PreviewPlayButton previewUrl={product.previewUrl} />
-
-              <button
-                type="button"
-                className="flex h-[52px] shrink-0 touch-manipulation select-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-accent px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:bg-accent-hover active:scale-95"
-              >
-                <DownloadIcon className="h-5 w-5" />
-                Download
-              </button>
-
-              <button
-                type="button"
-                aria-label="Add to wishlist"
-                className="flex h-[52px] w-[52px] shrink-0 touch-manipulation select-none items-center justify-center rounded-full bg-surface-2 text-white transition-all duration-200 ease-in-out active:scale-90"
-              >
-                <HeartIcon className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="flex flex-row flex-wrap gap-2">
-              {product.formats.map((format) => (
-                <span
-                  key={format}
-                  className="flex flex-row items-center gap-1 rounded-full border border-surface-2 px-3 py-1 text-xs text-muted"
-                >
-                  <TileWaveformIcon className="h-4 w-4 text-white" />
-                  {format}
-                </span>
-              ))}
-              {product.featured && (
-                <span className="flex flex-row items-center gap-1 rounded-full border border-surface-2 px-3 py-1 text-xs text-muted">
-                  <FlameIcon className="h-4 w-4 text-white" />
-                  Featured
-                </span>
-              )}
-            </div>
-
-            <ReadMore text={product.description} />
+            <ProductPreviewPanel product={product} />
           </div>
         </div>
 
