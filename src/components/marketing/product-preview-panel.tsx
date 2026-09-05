@@ -127,7 +127,6 @@ function AnimatedDescription({ text, progress }: { text: string; progress: numbe
 
 export function ProductPreviewPanel({ product }: { product: Product }) {
   const { status, currentTime, duration, toggle } = useAudioPreview(product.previewUrl);
-  const [expanded, setExpanded] = useState(false);
   const progress = duration > 0 ? currentTime / duration : 0;
 
   return (
@@ -206,16 +205,9 @@ export function ProductPreviewPanel({ product }: { product: Product }) {
         )}
       </div>
 
-      <div className={expanded ? "" : "line-clamp-5"}>
+      <div>
         <AnimatedDescription text={product.description} progress={progress} />
       </div>
-      <button
-        type="button"
-        onClick={() => setExpanded((value) => !value)}
-        className="mt-2 w-fit text-sm text-foreground underline underline-offset-4 transition hover:text-accent"
-      >
-        {expanded ? "Show less" : "Read more"}
-      </button>
     </>
   );
 }
