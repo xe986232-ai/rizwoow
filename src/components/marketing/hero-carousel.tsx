@@ -23,12 +23,6 @@ const packs: Pack[] = [
     subtitle: "Warm analog drums for boom-bap and neo-soul",
     image: "/products/concrete-bloom.png",
   },
-  {
-    title: "Glass Horizon",
-    subtitle: "Airy synth loops built for cinematic openers",
-    image:
-      "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1600&q=80",
-  },
 ];
 
 export function HeroCarousel() {
