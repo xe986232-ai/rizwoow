@@ -3,12 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { EqualizerIcon, PlayIcon, SectionArrowIcon } from "@/components/icons";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Pack {
   title: string;
   subtitle: string;
   image: string;
+  previewUrl?: string;
 }
 
 const packs: Pack[] = [
@@ -16,23 +17,78 @@ const packs: Pack[] = [
     title: "Bersaing",
     subtitle: "Lana Rmx",
     image: "/products/concrete-bloom.png",
+    previewUrl: "/audio/bersaing-preview.mp3",
   },
   {
     title: "Mutiara",
     subtitle: "Mutiara - Ipank",
     image: "/products/mutiara.png",
+    previewUrl: "/audio/mutiara-preview.mp3",
   },
 ];
 
 export function HeroCarousel() {
   const [index, setIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const pack = packs[index];
 
   function go(delta: number) {
-    setIsPlaying(false);
+    stopPreview();
     setIndex((i) => (i + delta + packs.length) % packs.length);
   }
+
+  function stopPreview() {
+    audioRef.current?.pause();
+    setIsPlaying(false);
+    setIsLoading(false);
+  }
+
+  function togglePlay() {
+    if (!pack.previewUrl) return;
+
+    if (isPlaying || isLoading) {
+      stopPreview();
+      return;
+    }
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.addEventListener("ended", () => setIsPlaying(false));
+    }
+
+    const audio = audioRef.current;
+
+    setIsPlaying(false);
+    setIsLoading(true);
+
+    const handlePlaying = () => {
+      setIsLoading(false);
+      setIsPlaying(true);
+      audio.removeEventListener("playing", handlePlaying);
+    };
+    audio.addEventListener("playing", handlePlaying);
+
+    audio.src = pack.previewUrl;
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+      setIsLoading(false);
+      audio.removeEventListener("playing", handlePlaying);
+    });
+  }
+
+  // Stop any playing preview when the slide changes some other way.
+  useEffect(() => {
+    stopPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
 
   // Auto-advance the hero slides every few seconds. Pauses while a
   // preview is playing so it doesn't jump mid-listen.
@@ -94,11 +150,36 @@ export function HeroCarousel() {
           <div className="flex md:absolute md:inset-0 md:mx-[35%] md:items-center md:justify-center">
             <button
               type="button"
-              aria-label={isPlaying ? "Pause preview" : "Play preview"}
-              onClick={() => setIsPlaying((p) => !p)}
+              aria-label={isLoading ? "Loading preview" : isPlaying ? "Pause preview" : "Play preview"}
+              onClick={togglePlay}
               className="group/play flex h-16 w-16 touch-manipulation select-none items-center justify-center rounded-full bg-foreground text-background transition-all duration-200 ease-in-out active:scale-90 md:hover:bg-surface-2 md:hover:text-foreground"
             >
-              {isPlaying ? (
+              {isLoading ? (
+                <svg
+                  className="animate-spin"
+                  width={20}
+                  height={20}
+                  viewBox="0 0 44 44"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="19"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeOpacity="0.25"
+                  />
+                  <path
+                    d="M41 22c0-10.493-8.507-19-19-19"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : isPlaying ? (
                 <EqualizerIcon width={18} height={18} />
               ) : (
                 <PlayIcon width={44} height={44} className="h-16 w-16" />
