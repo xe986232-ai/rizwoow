@@ -1,6 +1,7 @@
 import { Breadcrumb } from "@/components/marketing/breadcrumb";
 import { SamplesSection } from "@/components/marketing/samples-section";
 import { ProductPreviewPanel } from "@/components/marketing/product-preview-panel";
+import { FeaturedProductsCarousel } from "@/components/marketing/featured-products-carousel";
 import { getProductBySlug, products } from "@/lib/products";
 import { notFound } from "next/navigation";
 
@@ -81,6 +82,10 @@ export default async function ProductPage({
             providerSlug={product.providerSlug}
           />
         )}
+
+        <div className="mt-lg">
+          <FeaturedProductsCarousel excludeSlug={product.slug} />
+        </div>
       </div>
     </div>
   );

@@ -18,7 +18,17 @@ const tags = [
   "Pop",
 ];
 
-export function FeaturedProductsCarousel() {
+export function FeaturedProductsCarousel({
+  excludeSlug,
+}: {
+  /** When set, the product with this slug is left out of the list —
+   * used on a product page to show "the rest" of the catalog. */
+  excludeSlug?: string;
+} = {}) {
+  const visibleProducts = excludeSlug
+    ? products.filter((product) => product.slug !== excludeSlug)
+    : products;
+
   const [activeTag, setActiveTag] = useState("Latest");
   const [playingSlug, setPlayingSlug] = useState<string | null>(null);
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
@@ -99,7 +109,7 @@ export function FeaturedProductsCarousel() {
           ref={scrollerRef}
           className="carousel-viewport flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-px-5 px-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          {products.map((product) => (
+          {visibleProducts.map((product) => (
             <li
               key={product.slug}
               className="group/card relative flex w-52 shrink-0 flex-col items-start justify-start gap-1 overflow-hidden rounded-2xl bg-surface-2 p-3 transition-colors duration-300 hover:bg-surface-2/70"
