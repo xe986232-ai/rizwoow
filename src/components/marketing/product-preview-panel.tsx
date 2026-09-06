@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import localFont from "next/font/local";
+import { getLenis } from "@/components/layout/smooth-scroll";
 import {
   DownloadIcon,
   FlameIcon,
@@ -20,6 +21,16 @@ const lyricFont = localFont({
   style: "normal",
   display: "swap",
 });
+
+// Kurva ease-out yang sama dipakai di scroll-reveal & page transition,
+// biar "rasa" gerakan kamera lirik ini nyambung sama animasi lain.
+const cameraEase = [0.22, 1, 0.36, 1] as const;
+
+// Lenis butuh easing berupa fungsi (t) => number, bukan array cubic-bezier
+// ala Framer Motion — ini kurva quartic yang sama dipakai di setup Lenis
+// (smooth-scroll.tsx), biar auto-scroll lirik "senada" sama smooth scroll
+// bawaan situs.
+const lenisEase = (t: number) => 1 - Math.pow(1 - t, 4);
 
 type Status = "idle" | "loading" | "playing";
 
@@ -126,19 +137,31 @@ export function useActiveLyricToken(
  * begitu lewat, balik abu lagi. Kalau `wordTimings` tersedia (hasil dari
  * Lyric Timing Tool), highlight dihitung dari timestamp asli per kata.
  * Kalau tidak ada, fallback ke estimasi proporsi karakter berbasis
- * `progress` (currentTime / duration). */
+ * `progress` (currentTime / duration).
+ *
+ * Selama audio diputar, paragraf ini juga jadi "kamera": tiap kata baru
+ * kena highlight ungu, halaman auto-scroll (lewat Lenis) supaya kata itu
+ * kelihatan, dan si paragraf zoom in dikit ke arah kata itu lalu balik —
+ * jadi berasa ngikutin lirik, bukan cuma teks statis yang di-scroll
+ * manual. */
 function AnimatedDescription({
   text,
   progress,
   activeTokenIndex,
   hasTimings,
+  isPlaying,
 }: {
   text: string;
   progress: number;
   activeTokenIndex: number;
   hasTimings: boolean;
+  isPlaying: boolean;
 }) {
   const tokens = useMemo(() => text.split(/(\s+)/), [text]);
+  const containerRef = useRef<HTMLParagraphElement | null>(null);
+  const wordRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
+  const [transformOrigin, setTransformOrigin] = useState("50% 50%");
+  const lastCameraKey = useRef<number>(-1);
 
   // rentang [start, end) 0..1 tiap kata, dihitung sekali per teks —
   // gak ada mutasi state pas render, cuma dibaca pas map di bawah.
@@ -160,8 +183,56 @@ function AnimatedDescription({
     });
   }, [tokens]);
 
+  // "Kamera" nyusul kata aktif: zoom ke arahnya + auto-scroll biar
+  // kelihatan di layar. Cuma jalan kalau lagi diputar & ada wordTimings
+  // (tanpa timing, gak ada satu kata "aktif" yang jelas buat dituju).
+  useEffect(() => {
+    if (!isPlaying || !hasTimings || activeTokenIndex < 0) return;
+    if (lastCameraKey.current === activeTokenIndex) return;
+    lastCameraKey.current = activeTokenIndex;
+
+    const wordEl = wordRefs.current.get(activeTokenIndex);
+    const containerEl = containerRef.current;
+    if (!wordEl || !containerEl) return;
+
+    // Origin zoom = posisi kata aktif relatif ke paragraf, biar zoom-nya
+    // "narik" ke arah kata itu, bukan ke tengah paragraf.
+    const wordRect = wordEl.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+    const originX =
+      ((wordRect.left + wordRect.width / 2 - containerRect.left) / containerRect.width) * 100;
+    const originY =
+      ((wordRect.top + wordRect.height / 2 - containerRect.top) / containerRect.height) * 100;
+    setTransformOrigin(`${originX}% ${originY}%`);
+
+    // Auto-scroll: pusatkan kata aktif di layar. `lock: true` bikin
+    // Lenis abaikan scroll manual user selama animasi ini jalan — tiap
+    // kata baru bakal narik posisi balik lagi ke sana.
+    getLenis()?.scrollTo(wordEl, {
+      offset: -window.innerHeight / 2 + wordRect.height / 2,
+      duration: 0.9,
+      easing: lenisEase,
+      lock: true,
+    });
+  }, [activeTokenIndex, isPlaying, hasTimings]);
+
+  // Balik ke posisi normal (tanpa setState) begitu berhenti diputar.
+  useEffect(() => {
+    if (isPlaying) return;
+    lastCameraKey.current = -1;
+  }, [isPlaying]);
+
+  const effectiveOrigin = isPlaying ? transformOrigin : "50% 50%";
+  const scale = isPlaying && hasTimings && activeTokenIndex >= 0 ? 1.08 : 1;
+
   return (
-    <p className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}>
+    <motion.p
+      ref={containerRef}
+      className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}
+      style={{ transformOrigin: effectiveOrigin }}
+      animate={{ scale }}
+      transition={{ duration: 0.9, ease: cameraEase }}
+    >
       {tokens.map((token, i) => {
         const range = wordRanges[i];
         if (!range) {
@@ -172,7 +243,14 @@ function AnimatedDescription({
           : progress >= range.start && progress < range.end;
 
         return (
-          <span key={i} className="relative inline-block px-0.5 py-0.5">
+          <span
+            key={i}
+            ref={(el) => {
+              if (el) wordRefs.current.set(i, el);
+              else wordRefs.current.delete(i);
+            }}
+            className="relative inline-block px-0.5 py-0.5"
+          >
             {isActive && (
               <motion.span
                 layoutId="active-word-highlight"
@@ -189,7 +267,7 @@ function AnimatedDescription({
           </span>
         );
       })}
-    </p>
+    </motion.p>
   );
 }
 
@@ -291,6 +369,7 @@ export function ProductPreviewPanel({
           progress={progress}
           activeTokenIndex={activeTokenIndex}
           hasTimings={hasTimings}
+          isPlaying={status === "playing"}
         />
       </div>
     </>

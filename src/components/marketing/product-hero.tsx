@@ -14,7 +14,7 @@ export function ProductHero({ product }: { product: Product }) {
   return (
     <div className="mt-lg grid grid-cols-12 gap-x-5">
       <div className="col-span-12 flex flex-col sm:col-span-6 md:col-span-5 lg:col-span-4 xl:col-span-3">
-        <ProductCameraImage product={product} audio={audio} />
+        <ProductCameraImage product={product} />
       </div>
 
       <div className="col-span-12 mt-4 flex flex-col gap-y-1.5 sm:col-span-6 sm:mt-0 md:col-span-7 lg:col-span-8 xl:col-span-9">
