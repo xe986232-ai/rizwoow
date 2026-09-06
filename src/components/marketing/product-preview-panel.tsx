@@ -25,7 +25,7 @@ type Status = "idle" | "loading" | "playing";
 
 /** Ngurusin audio preview + expose currentTime/duration-nya, biar
  * tombol play dan animasi kata sama-sama bisa baca posisi yang sama. */
-function useAudioPreview(previewUrl?: string) {
+export function useAudioPreview(previewUrl?: string) {
   const [status, setStatus] = useState<Status>("idle");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -78,6 +78,50 @@ function useAudioPreview(previewUrl?: string) {
   return { status, currentTime, duration, toggle };
 }
 
+export type AudioPreviewState = ReturnType<typeof useAudioPreview>;
+
+/** Tokenize teks lirik + hitung kata mana yang lagi aktif di currentTime,
+ * berdasarkan wordTimings (timestamp asli per kata). Dipakai bareng oleh
+ * highlight teks (AnimatedDescription) dan gerakan kamera di cover art,
+ * biar dua-duanya "denger" beat kata yang sama persis. */
+export function useActiveLyricToken(
+  text: string,
+  wordTimings: WordTiming[] | undefined,
+  currentTime: number
+) {
+  const tokens = useMemo(() => text.split(/(\s+)/), [text]);
+
+  const startByTokenIndex = useMemo(() => {
+    if (!wordTimings || wordTimings.length === 0) return null;
+    const map = new Map<number, number>();
+    let wtIndex = 0;
+    tokens.forEach((token, i) => {
+      if (token === "" || /^\s+$/.test(token)) return;
+      const timing = wordTimings[wtIndex];
+      if (timing && timing.start !== null) {
+        map.set(i, timing.start);
+      }
+      wtIndex += 1;
+    });
+    return map;
+  }, [tokens, wordTimings]);
+
+  const activeTokenIndex = useMemo(() => {
+    if (!startByTokenIndex) return -1;
+    let best = -1;
+    let bestStart = -Infinity;
+    startByTokenIndex.forEach((start, tokenIndex) => {
+      if (start <= currentTime && start > bestStart) {
+        bestStart = start;
+        best = tokenIndex;
+      }
+    });
+    return best;
+  }, [startByTokenIndex, currentTime]);
+
+  return { tokens, startByTokenIndex, activeTokenIndex };
+}
+
 /** Deskripsi yang nyorotin satu kata di posisi "sekarang" doang —
  * begitu lewat, balik abu lagi. Kalau `wordTimings` tersedia (hasil dari
  * Lyric Timing Tool), highlight dihitung dari timestamp asli per kata.
@@ -86,13 +130,13 @@ function useAudioPreview(previewUrl?: string) {
 function AnimatedDescription({
   text,
   progress,
-  currentTime,
-  wordTimings,
+  activeTokenIndex,
+  hasTimings,
 }: {
   text: string;
   progress: number;
-  currentTime: number;
-  wordTimings?: WordTiming[];
+  activeTokenIndex: number;
+  hasTimings: boolean;
 }) {
   const tokens = useMemo(() => text.split(/(\s+)/), [text]);
 
@@ -116,38 +160,6 @@ function AnimatedDescription({
     });
   }, [tokens]);
 
-  // Map token index -> timestamp mulai (detik), diselaraskan berurutan
-  // dengan wordTimings (keduanya di-tokenize dengan cara yang sama).
-  const startByTokenIndex = useMemo(() => {
-    if (!wordTimings || wordTimings.length === 0) return null;
-    const map = new Map<number, number>();
-    let wtIndex = 0;
-    tokens.forEach((token, i) => {
-      if (token === "" || /^\s+$/.test(token)) return;
-      const timing = wordTimings[wtIndex];
-      if (timing && timing.start !== null) {
-        map.set(i, timing.start);
-      }
-      wtIndex += 1;
-    });
-    return map;
-  }, [tokens, wordTimings]);
-
-  // Token index yang lagi aktif berdasarkan currentTime: kata dengan
-  // start terbesar yang masih <= currentTime.
-  const activeTokenIndex = useMemo(() => {
-    if (!startByTokenIndex) return null;
-    let best = -1;
-    let bestStart = -Infinity;
-    startByTokenIndex.forEach((start, tokenIndex) => {
-      if (start <= currentTime && start > bestStart) {
-        bestStart = start;
-        best = tokenIndex;
-      }
-    });
-    return best;
-  }, [startByTokenIndex, currentTime]);
-
   return (
     <p className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}>
       {tokens.map((token, i) => {
@@ -155,7 +167,7 @@ function AnimatedDescription({
         if (!range) {
           return <span key={i}>{token}</span>;
         }
-        const isActive = startByTokenIndex
+        const isActive = hasTimings
           ? i === activeTokenIndex
           : progress >= range.start && progress < range.end;
 
@@ -181,9 +193,21 @@ function AnimatedDescription({
   );
 }
 
-export function ProductPreviewPanel({ product }: { product: Product }) {
-  const { status, currentTime, duration, toggle } = useAudioPreview(product.previewUrl);
+export function ProductPreviewPanel({
+  product,
+  audio,
+}: {
+  product: Product;
+  audio: AudioPreviewState;
+}) {
+  const { status, currentTime, duration, toggle } = audio;
   const progress = duration > 0 ? currentTime / duration : 0;
+  const { activeTokenIndex } = useActiveLyricToken(
+    product.description,
+    product.wordTimings,
+    currentTime
+  );
+  const hasTimings = Boolean(product.wordTimings && product.wordTimings.length > 0);
 
   return (
     <>
@@ -265,8 +289,8 @@ export function ProductPreviewPanel({ product }: { product: Product }) {
         <AnimatedDescription
           text={product.description}
           progress={progress}
-          currentTime={currentTime}
-          wordTimings={product.wordTimings}
+          activeTokenIndex={activeTokenIndex}
+          hasTimings={hasTimings}
         />
       </div>
     </>
