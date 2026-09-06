@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import localFont from "next/font/local";
 import { getLenis } from "@/components/layout/smooth-scroll";
 import {
@@ -223,13 +223,28 @@ function AnimatedDescription({
   }, [isPlaying]);
 
   const effectiveOrigin = isPlaying ? transformOrigin : "50% 50%";
-  const scale = isPlaying && hasTimings && activeTokenIndex >= 0 ? 1.08 : 1;
+  // Punch-in kerasa jelas (bukan cuma 8%) begitu ada kata aktif, biar
+  // beneran berasa kamera nge-zoom ke kata itu, bukan sekadar getar halus.
+  const scale = isPlaying && hasTimings && activeTokenIndex >= 0 ? 1.35 : 1;
 
   return (
     <motion.p
       ref={containerRef}
       className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}
-      style={{ transformOrigin: effectiveOrigin }}
+      style={{
+        transformOrigin: effectiveOrigin,
+        // Bug yang sama kayak di product-hero.tsx: aturan global `p {
+        // font-size: 20px }` di globals.css gak ke-layer, jadi dia
+        // menang lawan utility Tailwind `.text-sm` (yang ke-layer),
+        // walau specificity class harusnya lebih tinggi — cascade
+        // layers bikin rule di luar @layer selalu menang. Makanya lirik
+        // ini kebaca 20px padahal harusnya 14px (text-sm), jadi tampil
+        // gak semestinya gede tiap baris pendeknya. fontSize eksplisit
+        // di sini yang bereskan, sama kayak h1/h2 di product-hero.tsx.
+        fontSize: "14px",
+        WebkitTextSizeAdjust: "none",
+        textSizeAdjust: "none",
+      }}
       animate={{ scale }}
       transition={{ duration: 0.9, ease: cameraEase }}
     >
@@ -251,13 +266,24 @@ function AnimatedDescription({
             }}
             className="relative inline-block px-0.5 py-0.5"
           >
-            {isActive && (
-              <motion.span
-                layoutId="active-word-highlight"
-                className="absolute inset-0 rounded-md bg-[#7c3aed]"
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-              />
-            )}
+            {/* AnimatePresence + pop in/out (bukan layoutId geser) sengaja
+             * dipilih: waktu kata aktif lompat ke baris berikutnya,
+             * animasi "geser" (FLIP) melar jadi garis tipis vertikal yang
+             * meregang antar baris — itu sumber "glitch" yang keliatan.
+             * Pop di tempat masing-masing kata jauh lebih aman & tetap
+             * kerasa hidup. */}
+            <AnimatePresence>
+              {isActive && (
+                <motion.span
+                  key="highlight"
+                  className="absolute inset-0 rounded-md bg-[#7c3aed]"
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                />
+              )}
+            </AnimatePresence>
             <span
               className="relative z-10 transition-colors duration-150 ease-out"
               style={{ color: isActive ? "#ffffff" : undefined }}
