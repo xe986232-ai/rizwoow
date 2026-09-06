@@ -20,10 +20,16 @@ const tags = [
 
 export function FeaturedProductsCarousel({
   excludeSlug,
+  title = "Featured products",
+  showTags = true,
 }: {
   /** When set, the product with this slug is left out of the list —
    * used on a product page to show "the rest" of the catalog. */
   excludeSlug?: string;
+  /** Section heading text. */
+  title?: string;
+  /** Whether to show the genre tag filter row. */
+  showTags?: boolean;
 } = {}) {
   const visibleProducts = excludeSlug
     ? products.filter((product) => product.slug !== excludeSlug)
@@ -84,24 +90,26 @@ export function FeaturedProductsCarousel({
     <section className="relative mx-sm rounded-2xl bg-surface py-12 md:mx-lg">
       <div className="mb-10 flex flex-col items-center justify-between gap-3 text-center md:items-start md:text-left">
         <h2 className="px-12 text-xl font-medium lg:text-lg">
-          Featured products
+          {title}
         </h2>
-        <div className="flex w-full gap-2 overflow-x-auto px-6 [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:overflow-visible md:px-12 [&::-webkit-scrollbar]:hidden">
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => setActiveTag(tag)}
-              className={`inline-flex h-9 shrink-0 items-center justify-start rounded-3xl border px-4 transition-colors duration-200 ${
-                activeTag === tag
-                  ? "border-accent"
-                  : "border-surface-2 hover:border-muted"
-              }`}
-            >
-              <span className="whitespace-nowrap text-xs">{tag}</span>
-            </button>
-          ))}
-        </div>
+        {showTags && (
+          <div className="flex w-full gap-2 overflow-x-auto px-6 [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:overflow-visible md:px-12 [&::-webkit-scrollbar]:hidden">
+            {tags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setActiveTag(tag)}
+                className={`inline-flex h-9 shrink-0 items-center justify-start rounded-3xl border px-4 transition-colors duration-200 ${
+                  activeTag === tag
+                    ? "border-accent"
+                    : "border-surface-2 hover:border-muted"
+                }`}
+              >
+                <span className="whitespace-nowrap text-xs">{tag}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="relative mx-auto w-full">

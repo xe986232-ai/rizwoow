@@ -84,7 +84,11 @@ export default async function ProductPage({
         )}
 
         <div className="mt-lg">
-          <FeaturedProductsCarousel excludeSlug={product.slug} />
+          <FeaturedProductsCarousel
+            excludeSlug={product.slug}
+            title="Related Product"
+            showTags={false}
+          />
         </div>
       </div>
     </div>
