@@ -1,6 +1,7 @@
 import { HeroCarousel } from "@/components/marketing/hero-carousel";
 import { FeaturedProductsCarousel } from "@/components/marketing/featured-products-carousel";
 import { SiteIntro } from "@/components/layout/site-intro";
+import { ScrollReveal } from "@/components/layout/scroll-reveal";
 
 export default function Home() {
   return (
@@ -9,11 +10,13 @@ export default function Home() {
         <HeroCarousel />
       </div>
 
-      <div className="mt-lg">
+      <ScrollReveal className="mt-lg">
         <FeaturedProductsCarousel />
-      </div>
+      </ScrollReveal>
 
-      <SiteIntro />
+      <ScrollReveal>
+        <SiteIntro />
+      </ScrollReveal>
     </div>
   );
 }

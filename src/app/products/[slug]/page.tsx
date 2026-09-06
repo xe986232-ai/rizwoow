@@ -2,6 +2,7 @@ import { Breadcrumb } from "@/components/marketing/breadcrumb";
 import { SamplesSection } from "@/components/marketing/samples-section";
 import { ProductPreviewPanel } from "@/components/marketing/product-preview-panel";
 import { FeaturedProductsCarousel } from "@/components/marketing/featured-products-carousel";
+import { ScrollReveal } from "@/components/layout/scroll-reveal";
 import { getProductBySlug, products } from "@/lib/products";
 import { notFound } from "next/navigation";
 
@@ -76,21 +77,23 @@ export default async function ProductPage({
         </div>
 
         {product.samples && product.samples.length > 0 && (
-          <SamplesSection
-            samples={product.samples}
-            packImage={product.image}
-            providerSlug={product.providerSlug}
-          />
+          <ScrollReveal>
+            <SamplesSection
+              samples={product.samples}
+              packImage={product.image}
+              providerSlug={product.providerSlug}
+            />
+          </ScrollReveal>
         )}
       </div>
 
-      <div className="mt-lg">
+      <ScrollReveal className="mt-lg">
         <FeaturedProductsCarousel
           excludeSlug={product.slug}
           title="Related Product"
           showTags={false}
         />
-      </div>
+      </ScrollReveal>
     </div>
   );
 }
