@@ -13,6 +13,12 @@ const DISCOUNT_DELAY_MS = 150; // pause after the strike finishes, before the di
  * No discount: the price just spins in once.
  * With discount: the original price spins in first, gets struck through,
  * then the discount price spins in next to it.
+ *
+ * The whole sequence only starts once the tag actually scrolls into view
+ * (IntersectionObserver) — in a horizontal carousel most cards start
+ * off-screen, so this keeps every card's reel from firing at once on
+ * page load. Before that, the price renders as plain static text (no
+ * extra reel DOM, no layout shift).
  */
 export function PriceTag({
   price,
@@ -21,15 +27,36 @@ export function PriceTag({
   price: string;
   originalPrice?: string;
 }) {
+  const wrapRef = useRef<HTMLSpanElement | null>(null);
+  const [visible, setVisible] = useState(
+    () => typeof IntersectionObserver === "undefined"
+  );
   const [struck, setStruck] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
+    if (visible) return;
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [visible]);
+
+  useEffect(() => {
     timers.current.forEach((t) => clearTimeout(t));
     timers.current = [];
 
-    if (!originalPrice) return;
+    if (!visible || !originalPrice) return;
 
     const originalDigits = originalPrice.replace(/\D/g, "").length;
     const strikeAt = reelSettleDuration(originalDigits) + STRIKE_DELAY_MS;
@@ -43,28 +70,30 @@ export function PriceTag({
     return () => {
       timers.current.forEach((t) => clearTimeout(t));
     };
-  }, [originalPrice]);
+  }, [visible, originalPrice]);
 
   if (!originalPrice) {
     return (
-      <span className="text-sm font-medium text-foreground">
-        <PriceReel value={price} />
+      <span ref={wrapRef} className="text-sm font-medium text-foreground">
+        {visible ? <PriceReel value={price} /> : price}
       </span>
     );
   }
 
   return (
-    <span className="flex flex-row flex-wrap items-center gap-2">
+    <span ref={wrapRef} className="flex flex-row flex-wrap items-center gap-2">
       <span
         className={`t-price-strike text-xs text-muted ${struck ? "is-struck" : ""}`}
       >
-        <PriceReel value={originalPrice} />
+        {visible ? <PriceReel value={originalPrice} /> : originalPrice}
       </span>
       <span
         className="text-sm font-medium text-foreground transition-opacity duration-200"
         style={{ opacity: showDiscount ? 1 : 0 }}
       >
-        {showDiscount && <PriceReel value={price} triggerKey={`${price}-discount`} />}
+        {showDiscount && (
+          <PriceReel value={price} triggerKey={`${price}-discount`} />
+        )}
       </span>
     </span>
   );

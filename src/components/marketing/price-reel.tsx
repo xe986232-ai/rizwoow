@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const CELL_PX = 30; // keep in sync with --reel-cell in globals.css
 const REEL_DUR_MS = 1400; // keep in sync with --reel-dur
 const STAGGER_MS = 90; // keep in sync with --reel-stagger
-const SPIN_BLUR_PX = 3; // keep in sync with --reel-spin-blur
 
 function prefersReducedMotion() {
   return (
@@ -31,59 +30,34 @@ function ReelColumn({
   triggerKey: string | number;
 }) {
   const stripRef = useRef<HTMLDivElement | null>(null);
-  const filterId = `t-reel-blur-${useId().replace(/:/g, "")}`;
-  const blurRef = useRef<SVGFEGaussianBlurElement | null>(null);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const strip = stripRef.current;
-    const blur = blurRef.current;
     if (!strip) return;
 
     const target = Number(digit);
-    const reduced = prefersReducedMotion();
     const delay = index * STAGGER_MS;
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-
-    if (reduced) {
+    if (prefersReducedMotion()) {
       strip.style.transition = "none";
       strip.style.transform = `translateY(-${target * CELL_PX}px)`;
-      if (blur) blur.setAttribute("stdDeviation", "0 0");
+      strip.style.filter = "blur(0px)";
       return;
     }
 
-    // Reset instantly to the top of the strip, then force reflow so the
-    // transition below actually starts from 0.
-    strip.style.transition = "none";
-    strip.style.transform = "translateY(0px)";
-    if (blur) blur.setAttribute("stdDeviation", `0 ${SPIN_BLUR_PX}`);
-    void strip.offsetHeight;
-
-    strip.style.transition = `transform ${REEL_DUR_MS}ms var(--reel-ease) ${delay}ms`;
+    // Initial paint already shows the strip at rest (translateY(0),
+    // blurred) via the inline style below — this effect runs after that
+    // paint, so setting the transition + target here animates from the
+    // already-rendered state. No forced reflow needed.
+    strip.style.transition = [
+      `transform ${REEL_DUR_MS}ms var(--reel-ease) ${delay}ms`,
+      `filter ${Math.round(REEL_DUR_MS * 0.55)}ms ease-out ${delay}ms`,
+    ].join(", ");
     strip.style.transform = `translateY(-${(spins * 10 + target) * CELL_PX}px)`;
-
-    // Decay the directional blur across this column's own window
-    // (its stagger delay + the reel duration), easing toward 0.
-    const start = performance.now() + delay;
-    const duration = REEL_DUR_MS;
-    const tick = (now: number) => {
-      const t = Math.min(1, Math.max(0, (now - start) / duration));
-      const eased = 1 - Math.pow(1 - t, 3);
-      const value = SPIN_BLUR_PX * (1 - eased);
-      if (blur) blur.setAttribute("stdDeviation", `0 ${value.toFixed(2)}`);
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      }
-    };
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    strip.style.filter = "blur(0px)";
   }, [digit, triggerKey, spins, index]);
 
-  const cells = [];
+  const cells: string[] = [];
   for (let loop = 0; loop <= spins; loop++) {
     for (let d = 0; d <= 9; d++) {
       cells.push(`${loop}-${d}`);
@@ -92,15 +66,10 @@ function ReelColumn({
 
   return (
     <span className="t-reel-col" style={{ width: "0.6em" }}>
-      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-        <filter id={filterId}>
-          <feGaussianBlur ref={blurRef} stdDeviation="0 0" />
-        </filter>
-      </svg>
       <div
         ref={stripRef}
         className="t-reel-strip"
-        style={{ filter: `url(#${filterId})` }}
+        style={{ filter: "blur(var(--reel-spin-blur))" }}
       >
         {cells.map((key) => (
           <span key={key} className="t-reel-digit">
@@ -116,6 +85,10 @@ function ReelColumn({
  * Spinning-reel number display. Non-digit characters (currency prefix,
  * thousand separators) render as static text; digits each get their own
  * reel column that spins in and lands on the target value.
+ *
+ * Uses a plain CSS `filter: blur()` transition (not a per-frame JS-driven
+ * SVG filter) — much cheaper to composite, especially with several reels
+ * animating in the same carousel.
  *
  * Pass a new `triggerKey` to re-spin (e.g. when the value it's revealing
  * changes from an original price to a discounted one).
