@@ -27,6 +27,11 @@ export interface Product {
   downloads: number;
   formats: string[];
   featured?: boolean;
+  /** Current selling price, shown on the product card. */
+  price: string;
+  /** Original price before discount. When present, shown with a strikethrough
+   * next to `price` to indicate a discount. */
+  originalPrice?: string;
   description: string;
   /** Optional per-word timing (seconds) for syncing the description
    * highlight with previewUrl playback. When present, this is used
@@ -50,6 +55,8 @@ export const products: Product[] = [
     downloads: 128,
     formats: ["Wav"],
     featured: true,
+    price: "Rp99.000",
+    originalPrice: "Rp150.000",
     previewUrl: "/audio/bersaing-preview.mp3",
     description:
       "I love u\nI Miss u\nI need u\nI found u\nakan ku beri semua kepada mu\n\nmari sini\nku buka hati\ndan jangan lagi\nuntuk mencari cari\ntanpa basa basi\ntolong jangan gengsi\nberani\nuntuk menjadikan aku bidadari\n\naku pusing\nhingga tujuh keliling\nlirikan mu\nbuat aku jadi salting\nsampai buat ku terbaring\nrasaingin untuk calling\ntapi sayang aku tak bisa bersaing",
@@ -288,6 +295,8 @@ export const products: Product[] = [
     downloads: 0,
     formats: ["Wav"],
     featured: true,
+    price: "Rp79.000",
+    originalPrice: "Rp120.000",
     previewUrl: "/audio/mutiara-preview.mp3",
     description: "Mutiara - Ipank",
     samples: [
@@ -364,6 +373,7 @@ export const products: Product[] = [
     downloads: 0,
     formats: ["Wav"],
     featured: true,
+    price: "Rp99.000",
     previewUrl: "/audio/kewer-kewer-preview.mp3",
     description: "Color Bass",
   },
