@@ -276,6 +276,21 @@ export const products: Product[] = [
       },
     ],
   },
+  {
+    slug: "mutiara",
+    name: "Mutiara",
+    tagline: "Mutiara - Ipank",
+    providerName: "RizWoow",
+    providerSlug: "nightshade-audio",
+    providerImage:
+      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=100&q=80",
+    image: "/products/mutiara.png",
+    downloads: 0,
+    formats: ["Wav"],
+    featured: true,
+    previewUrl: "/audio/mutiara-preview.mp3",
+    description: "Mutiara - Ipank",
+  },
 ];
 
 export function getProductBySlug(slug: string) {
