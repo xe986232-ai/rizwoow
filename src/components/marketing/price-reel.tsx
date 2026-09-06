@@ -3,8 +3,8 @@
 import { useEffect, useRef } from "react";
 
 const CELL_PX = 30; // keep in sync with --reel-cell in globals.css
-const REEL_DUR_MS = 1400; // keep in sync with --reel-dur
-const STAGGER_MS = 90; // keep in sync with --reel-stagger
+const REEL_DUR_MS = 900; // keep in sync with --reel-dur
+const STAGGER_MS = 60; // keep in sync with --reel-stagger
 
 function prefersReducedMotion() {
   return (
@@ -41,20 +41,17 @@ function ReelColumn({
     if (prefersReducedMotion()) {
       strip.style.transition = "none";
       strip.style.transform = `translateY(-${target * CELL_PX}px)`;
-      strip.style.filter = "blur(0px)";
       return;
     }
 
-    // Initial paint already shows the strip at rest (translateY(0),
-    // blurred) via the inline style below — this effect runs after that
-    // paint, so setting the transition + target here animates from the
-    // already-rendered state. No forced reflow needed.
-    strip.style.transition = [
-      `transform ${REEL_DUR_MS}ms var(--reel-ease) ${delay}ms`,
-      `filter ${Math.round(REEL_DUR_MS * 0.55)}ms ease-out ${delay}ms`,
-    ].join(", ");
+    // Initial paint already shows the strip at rest (translateY(0)) via
+    // the default (no inline transform) state — this effect runs after
+    // that paint, so setting the transition + target here animates from
+    // the already-rendered state. Transform-only: no filter/blur, so this
+    // is pure compositor work — cheap even with several reels animating
+    // in the same carousel.
+    strip.style.transition = `transform ${REEL_DUR_MS}ms var(--reel-ease) ${delay}ms`;
     strip.style.transform = `translateY(-${(spins * 10 + target) * CELL_PX}px)`;
-    strip.style.filter = "blur(0px)";
   }, [digit, triggerKey, spins, index]);
 
   const cells: string[] = [];
@@ -66,11 +63,7 @@ function ReelColumn({
 
   return (
     <span className="t-reel-col" style={{ width: "0.6em" }}>
-      <div
-        ref={stripRef}
-        className="t-reel-strip"
-        style={{ filter: "blur(var(--reel-spin-blur))" }}
-      >
+      <div ref={stripRef} className="t-reel-strip">
         {cells.map((key) => (
           <span key={key} className="t-reel-digit">
             {key.split("-")[1]}
@@ -86,16 +79,16 @@ function ReelColumn({
  * thousand separators) render as static text; digits each get their own
  * reel column that spins in and lands on the target value.
  *
- * Uses a plain CSS `filter: blur()` transition (not a per-frame JS-driven
- * SVG filter) — much cheaper to composite, especially with several reels
- * animating in the same carousel.
+ * Transform-only animation (no filter/blur) — cheapest possible, runs
+ * entirely on the compositor thread even with several reels animating
+ * at once.
  *
  * Pass a new `triggerKey` to re-spin (e.g. when the value it's revealing
  * changes from an original price to a discounted one).
  */
 export function PriceReel({
   value,
-  spins = 1,
+  spins = 0,
   triggerKey = value,
   className,
 }: {

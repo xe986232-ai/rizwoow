@@ -98,22 +98,16 @@ p, .text-body {
   h3, .text-h3 { font-size: 26px; line-height: 32px; }
 }
 
-/* Transitions.dev — Spinning counter */
-/*
-  Usage:
-    <div class="t-reel"></div>  <!-- reels built in JS -->
-  Build one .t-reel-col per digit, each clipping a strip
-  (.t-reel-strip) of 0-9 cells; translate the strip up by
-  (spins*10 + digit) cells to spin then land. A directional
-  (vertical-only) SVG feGaussianBlur stdDeviation="0 Y" gives
-  the motion streak (CSS blur() would smear sideways); decay it
-  to 0 per column as each reel settles.
-*/
+/* Spinning counter (price reveal) — adapted from a Transitions.dev
+   snippet. Originally used a directional SVG feGaussianBlur decaying
+   per column for a motion streak, but that meant animating the blur
+   *value* every frame across several columns at once — expensive to
+   composite, especially on lower-power devices. Dropped in favor of a
+   plain transform-only tween: cheapest possible, compositor-only. */
 :root {
-  --reel-dur: 1400ms;
+  --reel-dur: 900ms;
   --reel-cell: 30px;
-  --reel-spin-blur: 3px;
-  --reel-stagger: 90ms;
+  --reel-stagger: 60ms;
   --reel-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 .t-reel { display: inline-flex; align-items: center; height: var(--reel-cell); font-variant-numeric: tabular-nums; }
@@ -123,14 +117,12 @@ p, .text-body {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%);
 }
-.t-reel-strip { display: flex; flex-direction: column; will-change: transform, filter; }
+.t-reel-strip { display: flex; flex-direction: column; will-change: transform; }
 .t-reel-digit { height: var(--reel-cell); display: flex; align-items: center; justify-content: center; }
 /* JS drives the tween: strip.style.transition =
-     'transform var(--reel-dur) var(--reel-ease) ' + (col*var(--reel-stagger)) + 'ms';
-   and decays each column's feGaussianBlur stdDeviation from
-   var(--reel-spin-blur) to 0 over its own window. */
+     'transform var(--reel-dur) var(--reel-ease) ' + (col*var(--reel-stagger)) + 'ms'; */
 @media (prefers-reduced-motion: reduce) {
-  .t-reel-strip { transition: none !important; filter: none !important; }
+  .t-reel-strip { transition: none !important; }
 }
 
 /* Price tag — strikethrough that "draws itself" over the original price
