@@ -56,7 +56,7 @@ export function ProductAmbientGlow({ imageSrc }: { imageSrc: string }) {
       className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-32 md:h-44"
       style={{
         background: rgb
-          ? `linear-gradient(to bottom, rgba(${rgb}, 0.32), rgba(${rgb}, 0) 100%)`
+          ? `linear-gradient(to bottom, rgba(${rgb}, 0.2), rgba(${rgb}, 0) 100%)`
           : undefined,
         opacity: rgb ? 1 : 0,
         transition: "opacity 0.5s ease-out",
