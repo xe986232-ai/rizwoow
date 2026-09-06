@@ -82,14 +82,14 @@ export default async function ProductPage({
             providerSlug={product.providerSlug}
           />
         )}
+      </div>
 
-        <div className="mt-lg">
-          <FeaturedProductsCarousel
-            excludeSlug={product.slug}
-            title="Related Product"
-            showTags={false}
-          />
-        </div>
+      <div className="mt-lg">
+        <FeaturedProductsCarousel
+          excludeSlug={product.slug}
+          title="Related Product"
+          showTags={false}
+        />
       </div>
     </div>
   );

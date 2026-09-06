@@ -89,7 +89,7 @@ export function FeaturedProductsCarousel({
   return (
     <section className="relative mx-sm rounded-2xl bg-surface py-12 md:mx-lg">
       <div className="mb-10 flex flex-col items-center justify-between gap-3 text-center md:items-start md:text-left">
-        <h2 className="px-12 text-xl font-medium lg:text-lg">
+        <h2 className="whitespace-nowrap px-12 text-xl font-medium lg:text-lg">
           {title}
         </h2>
         {showTags && (
