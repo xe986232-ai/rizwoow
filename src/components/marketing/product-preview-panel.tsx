@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import localFont from "next/font/local";
 import {
   DownloadIcon,
   FlameIcon,
@@ -11,6 +12,14 @@ import {
   TileWaveformIcon,
 } from "@/components/icons";
 import type { Product, WordTiming } from "@/lib/products";
+
+// Custom typeface used only for the animated word-by-word lyric preview.
+const lyricFont = localFont({
+  src: "../../fonts/SpotifyMix-Black.ttf",
+  weight: "900",
+  style: "normal",
+  display: "swap",
+});
 
 type Status = "idle" | "loading" | "playing";
 
@@ -140,7 +149,7 @@ function AnimatedDescription({
   }, [startByTokenIndex, currentTime]);
 
   return (
-    <p className="whitespace-pre-line text-sm leading-loose text-muted">
+    <p className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}>
       {tokens.map((token, i) => {
         const range = wordRanges[i];
         if (!range) {
