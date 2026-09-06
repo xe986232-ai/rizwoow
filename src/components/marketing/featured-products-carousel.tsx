@@ -3,6 +3,7 @@
 import { PlayIcon, SectionArrowIcon, TileWaveformIcon } from "@/components/icons";
 import { products } from "@/lib/products";
 import { TransitionLink } from "@/components/layout/transition-link";
+import { PriceTag } from "@/components/marketing/price-tag";
 import { useEffect, useRef, useState } from "react";
 
 const tags = [
@@ -238,14 +239,7 @@ export function FeaturedProductsCarousel({
               </div>
 
               <div className="flex flex-row flex-wrap items-center gap-2 px-2 pb-1">
-                <span className="text-sm font-medium text-foreground">
-                  {product.price}
-                </span>
-                {product.originalPrice && (
-                  <span className="text-xs text-muted line-through">
-                    {product.originalPrice}
-                  </span>
-                )}
+                <PriceTag price={product.price} originalPrice={product.originalPrice} />
               </div>
 
               <div className="flex flex-row flex-wrap gap-2 px-2 pb-2">
