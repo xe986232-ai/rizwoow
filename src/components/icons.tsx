@@ -193,25 +193,21 @@ export function FlameIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Download — arrow into a tray, used on the primary download button. */
+/** Download — cloud with arrow, used on the primary download button. */
 export function DownloadIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
+      viewBox="0 0 28 28"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.75"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       {...props}
     >
-      <path d="M12 3v12" />
-      <path d="M7 10l5 5l5 -5" />
-      <path d="M5 19h14" />
+      <path d="M22.1667 19.8344C23.2496 19.8344 24.2882 19.4042 25.054 18.6384C25.8198 17.8726 26.25 16.834 26.25 15.751C26.25 14.6681 25.8198 13.6295 25.054 12.8637C24.2882 12.0979 23.2496 11.6677 22.1667 11.6677H21C21.1702 10.9093 21.1728 10.1282 21.0076 9.3689C20.8424 8.60962 20.5127 7.88705 20.0372 7.24246C19.5617 6.59786 18.9499 6.04387 18.2365 5.6121C17.5231 5.18033 16.7223 4.87925 15.8796 4.72604C15.037 4.57283 14.169 4.5705 13.3254 4.71917C12.4817 4.86785 11.6789 5.16462 10.9627 5.59254C9.51621 6.45677 8.51045 7.80275 8.16665 9.33438C6.92293 9.28456 5.69978 9.64984 4.70664 10.3677C3.71349 11.0855 3.01212 12.1113 2.72261 13.2693C2.4331 14.4274 2.57346 15.6457 3.11965 16.7156C3.66585 17.7856 4.58392 18.6406 5.71665 19.1344M14 14.0008V24.5008M17.5 21.0008L14 24.5008L10.5 21.0008" />
     </svg>
   );
 }
