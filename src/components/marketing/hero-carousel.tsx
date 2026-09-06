@@ -23,6 +23,11 @@ const packs: Pack[] = [
     subtitle: "Warm analog drums for boom-bap and neo-soul",
     image: "/products/concrete-bloom.png",
   },
+  {
+    title: "Mutiara",
+    subtitle: "Mutiara - Ipank",
+    image: "/products/mutiara.png",
+  },
 ];
 
 export function HeroCarousel() {
