@@ -41,7 +41,7 @@ export const products: Product[] = [
   {
     slug: "concrete-bloom",
     name: "Bersaing",
-    tagline: "Textured Lo-Fi Percussion & Foley",
+    tagline: "Lana Rmx",
     providerName: "RizWoow",
     providerSlug: "nightshade-audio",
     providerImage:

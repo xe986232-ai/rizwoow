@@ -13,14 +13,8 @@ interface Pack {
 
 const packs: Pack[] = [
   {
-    title: "Midnight Static",
-    subtitle: "Lo-fi textures pulled from late-night sessions",
-    image:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1600&q=80",
-  },
-  {
     title: "Bersaing",
-    subtitle: "Warm analog drums for boom-bap and neo-soul",
+    subtitle: "Lana Rmx",
     image: "/products/concrete-bloom.png",
   },
   {
