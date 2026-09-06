@@ -101,7 +101,7 @@ export function FeaturedProductsCarousel({
                 onClick={() => setActiveTag(tag)}
                 className={`inline-flex h-9 shrink-0 items-center justify-start rounded-3xl border px-4 transition-colors duration-200 ${
                   activeTag === tag
-                    ? "border-accent"
+                    ? "border-white"
                     : "border-surface-2 hover:border-muted"
                 }`}
               >
