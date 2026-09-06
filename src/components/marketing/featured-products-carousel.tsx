@@ -105,7 +105,7 @@ export function FeaturedProductsCarousel() {
               className="group/card relative flex w-52 shrink-0 flex-col items-start justify-start gap-1 overflow-hidden rounded-2xl bg-surface-2 p-3 transition-colors duration-300 hover:bg-surface-2/70"
             >
               <div className="relative w-full">
-                <TransitionLink href={`/sample-pack/${product.slug}`} className="block">
+                <TransitionLink href={`/products/${product.slug}`} className="block">
                   <span className="relative block aspect-square w-full overflow-hidden rounded-lg bg-background">
                     <img
                       src={product.image}
@@ -205,7 +205,7 @@ export function FeaturedProductsCarousel() {
 
               <div className="flex w-full min-w-0 flex-col px-2 pb-2 pt-3">
                 <p className="truncate text-sm font-medium text-foreground transition-colors duration-300">
-                  <TransitionLink href={`/sample-pack/${product.slug}`}>{product.name}</TransitionLink>
+                  <TransitionLink href={`/products/${product.slug}`}>{product.name}</TransitionLink>
                 </p>
                 <p
                   className="truncate leading-tight text-muted"
