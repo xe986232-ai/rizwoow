@@ -25,6 +25,12 @@ const packs: Pack[] = [
     image: "/products/mutiara.png",
     previewUrl: "/audio/mutiara-preview.mp3",
   },
+  {
+    title: "Kewer - Kewer",
+    subtitle: "Color Bass",
+    image: "/products/kewer-kewer.png",
+    previewUrl: "/audio/kewer-kewer-preview.mp3",
+  },
 ];
 
 export function HeroCarousel() {

@@ -352,6 +352,21 @@ export const products: Product[] = [
       },
     ],
   },
+  {
+    slug: "kewer-kewer",
+    name: "Kewer - Kewer",
+    tagline: "Color Bass",
+    providerName: "RizWoow",
+    providerSlug: "nightshade-audio",
+    providerImage:
+      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=100&q=80",
+    image: "/products/kewer-kewer.png",
+    downloads: 0,
+    formats: ["Wav"],
+    featured: true,
+    previewUrl: "/audio/kewer-kewer-preview.mp3",
+    description: "Color Bass",
+  },
 ];
 
 export function getProductBySlug(slug: string) {
