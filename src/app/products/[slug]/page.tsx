@@ -1,4 +1,5 @@
 import { Breadcrumb } from "@/components/marketing/breadcrumb";
+import { ProductAmbientGlow } from "@/components/marketing/product-ambient-glow";
 import { SamplesSection } from "@/components/marketing/samples-section";
 import { ProductPreviewPanel } from "@/components/marketing/product-preview-panel";
 import { FeaturedProductsCarousel } from "@/components/marketing/featured-products-carousel";
@@ -24,7 +25,8 @@ export default async function ProductPage({
 
   return (
     <div className="flex flex-col pb-xl">
-      <div className="mt-md px-sm md:mt-lg md:px-lg">
+      <div className="relative mt-md px-sm md:mt-lg md:px-lg">
+        <ProductAmbientGlow imageSrc={product.image} />
         <Breadcrumb
           items={[
             { label: "Home", href: "/" },
