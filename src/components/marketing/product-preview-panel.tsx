@@ -22,10 +22,6 @@ const lyricFont = localFont({
   display: "swap",
 });
 
-// Kurva ease-out yang sama dipakai di scroll-reveal & page transition,
-// biar "rasa" gerakan kamera lirik ini nyambung sama animasi lain.
-const cameraEase = [0.22, 1, 0.36, 1] as const;
-
 // Lenis butuh easing berupa fungsi (t) => number, bukan array cubic-bezier
 // ala Framer Motion — ini kurva quartic yang sama dipakai di setup Lenis
 // (smooth-scroll.tsx), biar auto-scroll lirik "senada" sama smooth scroll
@@ -139,11 +135,11 @@ export function useActiveLyricToken(
  * Kalau tidak ada, fallback ke estimasi proporsi karakter berbasis
  * `progress` (currentTime / duration).
  *
- * Selama audio diputar, paragraf ini juga jadi "kamera": tiap kata baru
- * kena highlight ungu, halaman auto-scroll (lewat Lenis) supaya kata itu
- * kelihatan, dan si paragraf zoom in dikit ke arah kata itu lalu balik —
- * jadi berasa ngikutin lirik, bukan cuma teks statis yang di-scroll
- * manual. */
+ * Selama audio diputar, paragraf ini juga auto-scroll (lewat Lenis)
+ * supaya kata aktif selalu kelihatan di layar. Efek "zoom kamera"-nya
+ * sendiri sekarang ditangani satu level di atas (ProductHero), yang
+ * mecut seluruh panggung (gambar + judul + lirik) bareng-bareng setiap
+ * kata baru aktif — bukan cuma paragraf ini doang. */
 function AnimatedDescription({
   text,
   progress,
@@ -158,10 +154,8 @@ function AnimatedDescription({
   isPlaying: boolean;
 }) {
   const tokens = useMemo(() => text.split(/(\s+)/), [text]);
-  const containerRef = useRef<HTMLParagraphElement | null>(null);
   const wordRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
-  const [transformOrigin, setTransformOrigin] = useState("50% 50%");
-  const lastCameraKey = useRef<number>(-1);
+  const lastScrollKey = useRef<number>(-1);
 
   // rentang [start, end) 0..1 tiap kata, dihitung sekali per teks —
   // gak ada mutasi state pas render, cuma dibaca pas map di bawah.
@@ -183,27 +177,18 @@ function AnimatedDescription({
     });
   }, [tokens]);
 
-  // "Kamera" nyusul kata aktif: zoom ke arahnya + auto-scroll biar
-  // kelihatan di layar. Cuma jalan kalau lagi diputar & ada wordTimings
-  // (tanpa timing, gak ada satu kata "aktif" yang jelas buat dituju).
+  // Auto-scroll ngikutin kata aktif biar selalu kelihatan di layar. Cuma
+  // jalan kalau lagi diputar & ada wordTimings (tanpa timing, gak ada
+  // satu kata "aktif" yang jelas buat dituju).
   useEffect(() => {
     if (!isPlaying || !hasTimings || activeTokenIndex < 0) return;
-    if (lastCameraKey.current === activeTokenIndex) return;
-    lastCameraKey.current = activeTokenIndex;
+    if (lastScrollKey.current === activeTokenIndex) return;
+    lastScrollKey.current = activeTokenIndex;
 
     const wordEl = wordRefs.current.get(activeTokenIndex);
-    const containerEl = containerRef.current;
-    if (!wordEl || !containerEl) return;
+    if (!wordEl) return;
 
-    // Origin zoom = posisi kata aktif relatif ke paragraf, biar zoom-nya
-    // "narik" ke arah kata itu, bukan ke tengah paragraf.
     const wordRect = wordEl.getBoundingClientRect();
-    const containerRect = containerEl.getBoundingClientRect();
-    const originX =
-      ((wordRect.left + wordRect.width / 2 - containerRect.left) / containerRect.width) * 100;
-    const originY =
-      ((wordRect.top + wordRect.height / 2 - containerRect.top) / containerRect.height) * 100;
-    setTransformOrigin(`${originX}% ${originY}%`);
 
     // Auto-scroll: pusatkan kata aktif di layar. `lock: true` bikin
     // Lenis abaikan scroll manual user selama animasi ini jalan — tiap
@@ -216,23 +201,15 @@ function AnimatedDescription({
     });
   }, [activeTokenIndex, isPlaying, hasTimings]);
 
-  // Balik ke posisi normal (tanpa setState) begitu berhenti diputar.
   useEffect(() => {
     if (isPlaying) return;
-    lastCameraKey.current = -1;
+    lastScrollKey.current = -1;
   }, [isPlaying]);
 
-  const effectiveOrigin = isPlaying ? transformOrigin : "50% 50%";
-  // Punch-in kerasa jelas (bukan cuma 8%) begitu ada kata aktif, biar
-  // beneran berasa kamera nge-zoom ke kata itu, bukan sekadar getar halus.
-  const scale = isPlaying && hasTimings && activeTokenIndex >= 0 ? 1.35 : 1;
-
   return (
-    <motion.p
-      ref={containerRef}
+    <p
       className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}
       style={{
-        transformOrigin: effectiveOrigin,
         // Bug yang sama kayak di product-hero.tsx: aturan global `p {
         // font-size: 20px }` di globals.css gak ke-layer, jadi dia
         // menang lawan utility Tailwind `.text-sm` (yang ke-layer),
@@ -245,8 +222,6 @@ function AnimatedDescription({
         WebkitTextSizeAdjust: "none",
         textSizeAdjust: "none",
       }}
-      animate={{ scale }}
-      transition={{ duration: 0.9, ease: cameraEase }}
     >
       {tokens.map((token, i) => {
         const range = wordRanges[i];
@@ -293,25 +268,25 @@ function AnimatedDescription({
           </span>
         );
       })}
-    </motion.p>
+    </p>
   );
 }
 
 export function ProductPreviewPanel({
   product,
   audio,
+  activeTokenIndex,
+  hasTimings,
 }: {
   product: Product;
   audio: AudioPreviewState;
+  // Dihitung sekali di ProductHero (bukan di sini) biar highlight kata dan
+  // "detak" zoom seluruh panggung selalu pas di kata yang sama persis.
+  activeTokenIndex: number;
+  hasTimings: boolean;
 }) {
   const { status, currentTime, duration, toggle } = audio;
   const progress = duration > 0 ? currentTime / duration : 0;
-  const { activeTokenIndex } = useActiveLyricToken(
-    product.description,
-    product.wordTimings,
-    currentTime
-  );
-  const hasTimings = Boolean(product.wordTimings && product.wordTimings.length > 0);
 
   return (
     <>
