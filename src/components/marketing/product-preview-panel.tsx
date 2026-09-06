@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import localFont from "next/font/local";
-import { getLenis } from "@/components/layout/smooth-scroll";
 import {
   DownloadIcon,
   FlameIcon,
@@ -22,17 +21,11 @@ const lyricFont = localFont({
   display: "swap",
 });
 
-// Lenis butuh easing berupa fungsi (t) => number, bukan array cubic-bezier
-// ala Framer Motion — ini kurva quartic yang sama dipakai di setup Lenis
-// (smooth-scroll.tsx), biar auto-scroll lirik "senada" sama smooth scroll
-// bawaan situs.
-const lenisEase = (t: number) => 1 - Math.pow(1 - t, 4);
-
 type Status = "idle" | "loading" | "playing";
 
 /** Ngurusin audio preview + expose currentTime/duration-nya, biar
  * tombol play dan animasi kata sama-sama bisa baca posisi yang sama. */
-export function useAudioPreview(previewUrl?: string) {
+function useAudioPreview(previewUrl?: string) {
   const [status, setStatus] = useState<Status>("idle");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -85,77 +78,23 @@ export function useAudioPreview(previewUrl?: string) {
   return { status, currentTime, duration, toggle };
 }
 
-export type AudioPreviewState = ReturnType<typeof useAudioPreview>;
-
-/** Tokenize teks lirik + hitung kata mana yang lagi aktif di currentTime,
- * berdasarkan wordTimings (timestamp asli per kata). Dipakai bareng oleh
- * highlight teks (AnimatedDescription) dan gerakan kamera di cover art,
- * biar dua-duanya "denger" beat kata yang sama persis. */
-export function useActiveLyricToken(
-  text: string,
-  wordTimings: WordTiming[] | undefined,
-  currentTime: number
-) {
-  const tokens = useMemo(() => text.split(/(\s+)/), [text]);
-
-  const startByTokenIndex = useMemo(() => {
-    if (!wordTimings || wordTimings.length === 0) return null;
-    const map = new Map<number, number>();
-    let wtIndex = 0;
-    tokens.forEach((token, i) => {
-      if (token === "" || /^\s+$/.test(token)) return;
-      const timing = wordTimings[wtIndex];
-      if (timing && timing.start !== null) {
-        map.set(i, timing.start);
-      }
-      wtIndex += 1;
-    });
-    return map;
-  }, [tokens, wordTimings]);
-
-  const activeTokenIndex = useMemo(() => {
-    if (!startByTokenIndex) return -1;
-    let best = -1;
-    let bestStart = -Infinity;
-    startByTokenIndex.forEach((start, tokenIndex) => {
-      if (start <= currentTime && start > bestStart) {
-        bestStart = start;
-        best = tokenIndex;
-      }
-    });
-    return best;
-  }, [startByTokenIndex, currentTime]);
-
-  return { tokens, startByTokenIndex, activeTokenIndex };
-}
-
 /** Deskripsi yang nyorotin satu kata di posisi "sekarang" doang —
  * begitu lewat, balik abu lagi. Kalau `wordTimings` tersedia (hasil dari
  * Lyric Timing Tool), highlight dihitung dari timestamp asli per kata.
  * Kalau tidak ada, fallback ke estimasi proporsi karakter berbasis
- * `progress` (currentTime / duration).
- *
- * Selama audio diputar, paragraf ini juga auto-scroll (lewat Lenis)
- * supaya kata aktif selalu kelihatan di layar. Efek "zoom kamera"-nya
- * sendiri sekarang ditangani satu level di atas (ProductHero), yang
- * mecut seluruh panggung (gambar + judul + lirik) bareng-bareng setiap
- * kata baru aktif — bukan cuma paragraf ini doang. */
+ * `progress` (currentTime / duration). */
 function AnimatedDescription({
   text,
   progress,
-  activeTokenIndex,
-  hasTimings,
-  isPlaying,
+  currentTime,
+  wordTimings,
 }: {
   text: string;
   progress: number;
-  activeTokenIndex: number;
-  hasTimings: boolean;
-  isPlaying: boolean;
+  currentTime: number;
+  wordTimings?: WordTiming[];
 }) {
   const tokens = useMemo(() => text.split(/(\s+)/), [text]);
-  const wordRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
-  const lastScrollKey = useRef<number>(-1);
 
   // rentang [start, end) 0..1 tiap kata, dihitung sekali per teks —
   // gak ada mutasi state pas render, cuma dibaca pas map di bawah.
@@ -177,88 +116,58 @@ function AnimatedDescription({
     });
   }, [tokens]);
 
-  // Auto-scroll ngikutin kata aktif biar selalu kelihatan di layar. Cuma
-  // jalan kalau lagi diputar & ada wordTimings (tanpa timing, gak ada
-  // satu kata "aktif" yang jelas buat dituju).
-  useEffect(() => {
-    if (!isPlaying || !hasTimings || activeTokenIndex < 0) return;
-    if (lastScrollKey.current === activeTokenIndex) return;
-    lastScrollKey.current = activeTokenIndex;
-
-    const wordEl = wordRefs.current.get(activeTokenIndex);
-    if (!wordEl) return;
-
-    const wordRect = wordEl.getBoundingClientRect();
-
-    // Auto-scroll: pusatkan kata aktif di layar. `lock: true` bikin
-    // Lenis abaikan scroll manual user selama animasi ini jalan — tiap
-    // kata baru bakal narik posisi balik lagi ke sana.
-    getLenis()?.scrollTo(wordEl, {
-      offset: -window.innerHeight / 2 + wordRect.height / 2,
-      duration: 0.9,
-      easing: lenisEase,
-      lock: true,
+  // Map token index -> timestamp mulai (detik), diselaraskan berurutan
+  // dengan wordTimings (keduanya di-tokenize dengan cara yang sama).
+  const startByTokenIndex = useMemo(() => {
+    if (!wordTimings || wordTimings.length === 0) return null;
+    const map = new Map<number, number>();
+    let wtIndex = 0;
+    tokens.forEach((token, i) => {
+      if (token === "" || /^\s+$/.test(token)) return;
+      const timing = wordTimings[wtIndex];
+      if (timing && timing.start !== null) {
+        map.set(i, timing.start);
+      }
+      wtIndex += 1;
     });
-  }, [activeTokenIndex, isPlaying, hasTimings]);
+    return map;
+  }, [tokens, wordTimings]);
 
-  useEffect(() => {
-    if (isPlaying) return;
-    lastScrollKey.current = -1;
-  }, [isPlaying]);
+  // Token index yang lagi aktif berdasarkan currentTime: kata dengan
+  // start terbesar yang masih <= currentTime.
+  const activeTokenIndex = useMemo(() => {
+    if (!startByTokenIndex) return null;
+    let best = -1;
+    let bestStart = -Infinity;
+    startByTokenIndex.forEach((start, tokenIndex) => {
+      if (start <= currentTime && start > bestStart) {
+        bestStart = start;
+        best = tokenIndex;
+      }
+    });
+    return best;
+  }, [startByTokenIndex, currentTime]);
 
   return (
-    <p
-      className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}
-      style={{
-        // Bug yang sama kayak di product-hero.tsx: aturan global `p {
-        // font-size: 20px }` di globals.css gak ke-layer, jadi dia
-        // menang lawan utility Tailwind `.text-sm` (yang ke-layer),
-        // walau specificity class harusnya lebih tinggi — cascade
-        // layers bikin rule di luar @layer selalu menang. Makanya lirik
-        // ini kebaca 20px padahal harusnya 14px (text-sm), jadi tampil
-        // gak semestinya gede tiap baris pendeknya. fontSize eksplisit
-        // di sini yang bereskan, sama kayak h1/h2 di product-hero.tsx.
-        fontSize: "14px",
-        WebkitTextSizeAdjust: "none",
-        textSizeAdjust: "none",
-      }}
-    >
+    <p className={`${lyricFont.className} whitespace-pre-line text-sm leading-loose text-muted`}>
       {tokens.map((token, i) => {
         const range = wordRanges[i];
         if (!range) {
           return <span key={i}>{token}</span>;
         }
-        const isActive = hasTimings
+        const isActive = startByTokenIndex
           ? i === activeTokenIndex
           : progress >= range.start && progress < range.end;
 
         return (
-          <span
-            key={i}
-            ref={(el) => {
-              if (el) wordRefs.current.set(i, el);
-              else wordRefs.current.delete(i);
-            }}
-            className="relative inline-block px-0.5 py-0.5"
-          >
-            {/* AnimatePresence + pop in/out (bukan layoutId geser) sengaja
-             * dipilih: waktu kata aktif lompat ke baris berikutnya,
-             * animasi "geser" (FLIP) melar jadi garis tipis vertikal yang
-             * meregang antar baris — itu sumber "glitch" yang keliatan.
-             * Pop di tempat masing-masing kata jauh lebih aman & tetap
-             * kerasa hidup. */}
-            <AnimatePresence>
-              {isActive && (
-                <motion.span
-                  key="highlight"
-                  className="absolute inset-0 rounded-md bg-[#7c3aed]"
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.6 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                />
-              )}
-            </AnimatePresence>
+          <span key={i} className="relative inline-block px-0.5 py-0.5">
+            {isActive && (
+              <motion.span
+                layoutId="active-word-highlight"
+                className="absolute inset-0 rounded-md bg-[#7c3aed]"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
             <span
               className="relative z-10 transition-colors duration-150 ease-out"
               style={{ color: isActive ? "#ffffff" : undefined }}
@@ -272,20 +181,8 @@ function AnimatedDescription({
   );
 }
 
-export function ProductPreviewPanel({
-  product,
-  audio,
-  activeTokenIndex,
-  hasTimings,
-}: {
-  product: Product;
-  audio: AudioPreviewState;
-  // Dihitung sekali di ProductHero (bukan di sini) biar highlight kata dan
-  // "detak" zoom seluruh panggung selalu pas di kata yang sama persis.
-  activeTokenIndex: number;
-  hasTimings: boolean;
-}) {
-  const { status, currentTime, duration, toggle } = audio;
+export function ProductPreviewPanel({ product }: { product: Product }) {
+  const { status, currentTime, duration, toggle } = useAudioPreview(product.previewUrl);
   const progress = duration > 0 ? currentTime / duration : 0;
 
   return (
@@ -368,9 +265,8 @@ export function ProductPreviewPanel({
         <AnimatedDescription
           text={product.description}
           progress={progress}
-          activeTokenIndex={activeTokenIndex}
-          hasTimings={hasTimings}
-          isPlaying={status === "playing"}
+          currentTime={currentTime}
+          wordTimings={product.wordTimings}
         />
       </div>
     </>
