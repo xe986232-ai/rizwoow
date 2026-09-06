@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { SiteIntro } from "@/components/layout/site-intro";
 import { SmoothScroll } from "@/components/layout/smooth-scroll";
 import { PageTransition } from "@/components/layout/page-transition";
 import "./globals.css";
@@ -28,7 +27,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             slides during page transitions. */}
         <Navbar />
         <PageTransition>{children}</PageTransition>
-        <SiteIntro />
         <Footer />
       </body>
     </html>
